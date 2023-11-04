@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 
-function GameOverPopUp(props: { winner?: string; moves: number }) {
+function GameOverPopUp(props: { winner?: string; moves?: number }) {
     let winnerString: string;
     if (props.winner === undefined) {
         winnerString = "Tie";
@@ -11,12 +11,19 @@ function GameOverPopUp(props: { winner?: string; moves: number }) {
         winnerString = `Winner: ${props.winner}`;
     }
 
+    let moves: number;
+    if (props.moves === undefined) {
+        moves = 9;
+    } else {
+        moves = props.moves + 1;
+    }
+
     return (
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-slate-800 bg-opacity-80">
             <p className="mb-5 select-none px-8 pt-4 text-3xl font-medium text-white">
                 {winnerString}
                 <br />
-                Total Moves: {props.moves}
+                Total Moves: {moves}
             </p>
         </div>
     );
@@ -53,12 +60,11 @@ export default function TicTacToe() {
         for (let i = 0; i < 3; i++) {
             if (
                 grid[row][0] === grid[row][1] &&
-                grid[row][1] === grid[row][2]
+                grid[row][1] === grid[row][2] &&
+                grid[row][0] !== "-"
             ) {
-                if (grid[row][0] !== "-") {
-                    setGameIsActive(false);
-                    return;
-                }
+                setGameIsActive(false);
+                return;
             }
         }
 
@@ -66,26 +72,29 @@ export default function TicTacToe() {
         for (let i = 0; i < 3; i++) {
             if (
                 grid[0][col] === grid[1][col] &&
-                grid[1][col] === grid[2][col]
+                grid[1][col] === grid[2][col] &&
+                grid[0][col] !== "-"
             ) {
-                if (grid[0][col] !== "-") {
-                    setGameIsActive(false);
-                    return;
-                }
+                setGameIsActive(false);
+                return;
             }
         }
 
         // check diags
-        if (grid[0][0] === grid[1][1] && grid[1][1] === grid[2][2]) {
-            if (grid[0][0] !== "-") {
-                setGameIsActive(false);
-                return;
-            }
-        } else if (grid[0][2] === grid[1][1] && grid[1][1] === grid[2][0]) {
-            if (grid[0][2] !== "-") {
-                setGameIsActive(false);
-                return;
-            }
+        if (
+            grid[0][0] === grid[1][1] &&
+            grid[1][1] === grid[2][2] &&
+            grid[0][0] !== "-"
+        ) {
+            setGameIsActive(false);
+            return;
+        } else if (
+            grid[0][2] === grid[1][1] &&
+            grid[1][1] === grid[2][0] &&
+            grid[0][2] !== "-"
+        ) {
+            setGameIsActive(false);
+            return;
         }
 
         if (player === "O") {
@@ -141,7 +150,7 @@ export default function TicTacToe() {
                     <GameOverPopUp winner={player} moves={moveCount.current} />
                 ) : null}
 
-                {isDraw ? <GameOverPopUp moves={moveCount.current} /> : null}
+                {isDraw ? <GameOverPopUp /> : null}
             </div>
         </div>
     );
