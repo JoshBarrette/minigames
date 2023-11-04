@@ -1,6 +1,6 @@
-/* @tailwind base;
+@tailwind base;
 @tailwind components;
-@tailwind utilities; */
+@tailwind utilities;
 
 :root {
     --foreground-rgb: 0, 0, 0;
@@ -19,10 +19,4 @@
 body {
     margin: 0px;
     padding: 0px;
-    color: rgb(var(--foreground-rgb));
-    background: linear-gradient(to bottom,
-            transparent,
-            rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
-            text-align: center;
 }
-

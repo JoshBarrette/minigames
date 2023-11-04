@@ -8,3 +8,6 @@ Just some React practice
 - Type racer
 - Set
 - Minesweeper
+
+## TODO:
+- Put all the common styles into their own file.
