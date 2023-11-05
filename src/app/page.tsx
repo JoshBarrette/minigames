@@ -18,9 +18,9 @@ export default function Home() {
 
                 <GameButton href="/TicTacToe" label="Tic Tac Toe" />
                 <br />
-                <GameButton href="/" label="Snake Game" />
+                <GameButton href="/Minesweeper" label="Minesweeper" />
                 <br />
-                <GameButton href="/" label="Minesweeper" />
+                <GameButton href="/" label="Snake Game" />
                 <br />
                 <GameButton href="/" label="Type Racer" />
             </div>
