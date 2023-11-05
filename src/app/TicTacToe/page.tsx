@@ -19,7 +19,7 @@ function GameOverPopUp(props: { winner?: string; moves?: number }) {
     }
 
     return (
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-slate-800 bg-opacity-80">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-slate-800 bg-opacity-80">
             <p className="mb-5 select-none px-8 pt-4 text-3xl font-medium text-white">
                 {winnerString}
                 <br />

@@ -10,4 +10,5 @@ Just some React practice
 - Minesweeper
 
 ## TODO:
+- Add windows for how to play.
 - Put all the common styles into their own file.
