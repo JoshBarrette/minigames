@@ -2,55 +2,145 @@
 
 import { useState } from "react";
 
+type SquareData = {
+    status: number;
+    isBomb: boolean;
+};
+
 enum squareStatus {
     flagged,
     mine,
-    notClick,
-    clicked,
+    notClicked,
+    cleared,
 }
-
 const squareImages = ["🚩", "💣", "⬜", "🟩"];
 
-function Square(props: { status: number; isBomb: boolean; nearCount?: number ; val: number; gridSize: number }) {
-    let bgColor = "bg-gray-950";
-    
+function Square(props: {
+    data: SquareData;
+    nearCount?: number;
+    index: number;
+    gridSize: number;
+}) {
+    const defaultColor = "bg-gray-950";
+    const defaultAltColor = "bg-gray-800";
+    const defaultHoverColor = "hover:bg-gray-500";
+
+    const clearedColor = "bg-green-600";
+    const clearedAltColor = "bg-green-700";
+    const clearedHoverColor = "hover:bg-green-900";
+
+    let bgColor = defaultColor;
+    let hoverColor = defaultHoverColor;
+
     // Gotta get that checkerboard effect
-    let row = (props.val / props.size) % 2 | 0;
-    if (props.size % 2 === 1 && props.val % 2 === 1) {
-        bgColor = "bg-gray-800";
-    } else  if (props.size % 2 === 0 && row == 0 && props.val % 2 === 1) {
-        bgColor = "bg-gray-800";
-    } else if (props.size % 2 === 0 && row == 1 && props.val % 2 === 0) {
-        bgColor = "bg-gray-800";
+    let isEvenRow = ((props.index / props.gridSize) % 2 | 0) === 0;
+    if (props.data.status === squareStatus.cleared) {
+        bgColor = clearedColor;
+        hoverColor = clearedHoverColor;
+
+        if (props.gridSize % 2 === 1 && props.index % 2 === 1) {
+            bgColor = clearedAltColor;
+        } else if (
+            props.gridSize % 2 === 0 &&
+            isEvenRow &&
+            props.index % 2 === 1
+        ) {
+            bgColor = clearedAltColor;
+        } else if (
+            props.gridSize % 2 === 0 &&
+            !isEvenRow &&
+            props.index % 2 === 0
+        ) {
+            bgColor = clearedAltColor;
+        }
+    } else {
+        if (props.gridSize % 2 === 1 && props.index % 2 === 1) {
+            bgColor = defaultAltColor;
+        } else if (
+            props.gridSize % 2 === 0 &&
+            isEvenRow &&
+            props.index % 2 === 1
+        ) {
+            bgColor = defaultAltColor;
+        } else if (
+            props.gridSize % 2 === 0 &&
+            !isEvenRow &&
+            props.index % 2 === 0
+        ) {
+            bgColor = defaultAltColor;
+        }
     }
 
     return (
         <div
-            className={`flex h-8 w-8 ${bgColor} p-2 text-xs text-white hover:bg-gray-500`}
+            className={`flex h-8 w-8 ${bgColor} p-2 text-xs hover:transition-all ${hoverColor}`}
         >
-            <div className="m-auto">{squareImages[props.status]}</div>
+            {props.data.status < 2 ? (
+                <div className="m-auto select-none">
+                    {squareImages[props.data.status]}
+                </div>
+            ) : null}
         </div>
     );
 }
 
-// TODO: probably need to redo the grid type :(
 export default function Minesweeper() {
     const [gridSize, setGridSize] = useState(10);
-    const [grid, setGrid] = useState(new Array<number>(gridSize * gridSize).fill(0));
-    const buttonStyling =
-        "my-1 rounded-md bg-gray-200 px-2 py-1 mx-3 font-sans text-xl shadow hover:bg-gray-400 active:bg-gray-800 active:text-white";
+    const [grid, setGrid] = useState(
+        new Array<SquareData | null>(gridSize * gridSize).fill(null).map(() => {
+            return {
+                status: squareStatus.notClicked,
+                isBomb: false,
+            };
+        })
+    );
+    const [shouldRefresh, setShouldRefresh] = useState(false);
 
-    function addMines() {
-        // TODO:
-    }
-    
+    const buttonStyling =
+        "transition-all my-1 rounded-md bg-gray-200 px-2 py-1 mx-3 font-sans text-xl shadow hover:bg-gray-400 active:bg-gray-800 active:text-white";
+
     function resizeGrid(newSize: number) {
         if (newSize === gridSize) {
             return;
         }
 
         setGridSize(newSize);
-        setGrid(new Array<number>(newSize * newSize).fill(0));
+        makeNewGrid(newSize);
+    }
+
+    function makeNewGrid(newSize: number) {
+        setGrid(
+            new Array<SquareData | null>(newSize * newSize)
+                .fill(null)
+                .map(() => {
+                    return {
+                        status: squareStatus.notClicked,
+                        isBomb: false,
+                    };
+                })
+        );
+    }
+
+    function addMines() {
+        // TODO: y0
+    }
+
+    function handleSquareClick(index: number) {
+        // if (grid[index].status === squareStatus.cleared) {
+        //     return;
+        // } else if (grid[index].isBomb === true) {
+        //     grid[index].status = squareStatus.mine;
+        //     setShouldRefresh(!shouldRefresh);
+        //     return;
+        // }
+
+        if (grid[index].status === squareStatus.cleared) {
+            grid[index].status = squareStatus.flagged;
+        } else {
+            grid[index].status++;
+        }
+
+        setShouldRefresh(!shouldRefresh);
     }
 
     return (
@@ -58,18 +148,25 @@ export default function Minesweeper() {
             <div className="m-auto">
                 <p className="select-none text-5xl font-medium">Minesweeper</p>
                 <br />
-                <div className={`my-grid-cols-${gridSize} m-auto mt-5 grid`}>
-                    {grid.map((_, key) => (
-                        <Square
-                            status={1}
-                            isBomb={false}
-                            key={key}
-                            gridSize={gridSize}
-                            val={key}
-                        />
+                <div className={`m-auto mt-5 grid my-grid-cols-${gridSize}`}>
+                    {grid.map((square, key) => (
+                        <div onClick={() => handleSquareClick(key)}>
+                            <Square
+                                data={square}
+                                key={key}
+                                gridSize={gridSize}
+                                index={key}
+                            />
+                        </div>
                     ))}
                 </div>
-                <p className="mt-3 select-none text-2xl font-medium">
+                <button
+                    className={buttonStyling + " mt-3"}
+                    onClick={() => makeNewGrid(gridSize)}
+                >
+                    Reset Game
+                </button>
+                <p className="select-none text-2xl font-medium">
                     Set Grid Size:
                 </p>
                 <button

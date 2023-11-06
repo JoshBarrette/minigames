@@ -124,7 +124,7 @@ export default function TicTacToe() {
                         return arr.map((currentChar, col) => (
                             <div
                                 onClick={() => handleTileClick(row, col)}
-                                className="h-24 w-20 select-none rounded-sm text-8xl hover:bg-gray-200"
+                                className="h-24  w-20 select-none rounded-sm text-8xl transition-all hover:bg-gray-200"
                                 key={keyCounter++}
                             >
                                 {currentChar}
@@ -134,14 +134,14 @@ export default function TicTacToe() {
                 </div>
 
                 <button
-                    className="rounded-md bg-gray-200 px-4 py-2 font-sans text-3xl shadow hover:bg-gray-400 active:bg-gray-800 active:text-white"
+                    className="rounded-md bg-gray-200 px-4 py-2 font-sans text-3xl shadow transition-all hover:bg-gray-400 active:bg-gray-800 active:text-white"
                     onClick={resetGrid}
                 >
                     Reset Game
                 </button>
                 <br />
                 <Link href="/">
-                    <button className="mt-2 rounded-md bg-gray-200 px-4 py-2 font-sans text-3xl shadow hover:bg-gray-400 active:bg-gray-800 active:text-white">
+                    <button className="mt-2 rounded-md bg-gray-200 px-4 py-2 font-sans text-3xl shadow transition-all hover:bg-gray-400 active:bg-gray-800 active:text-white">
                         Back To Home
                     </button>
                 </Link>
