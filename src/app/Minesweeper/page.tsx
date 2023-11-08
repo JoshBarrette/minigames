@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 type SquareData = {
     status: number;
     isBomb: boolean;
+    nearCount: number;
+    index: number;
 };
 
 enum squareStatus {
@@ -15,12 +18,7 @@ enum squareStatus {
 }
 const squareImages = ["🚩", "💣", "⬜", "🟩"];
 
-function Square(props: {
-    data: SquareData;
-    nearCount?: number;
-    index: number;
-    gridSize: number;
-}) {
+function Square(props: { data: SquareData; gridSize: number }) {
     const defaultColor = "bg-gray-950";
     const defaultAltColor = "bg-gray-800";
     const defaultHoverColor = "hover:bg-gray-500";
@@ -33,39 +31,39 @@ function Square(props: {
     let hoverColor = defaultHoverColor;
 
     // Gotta get that checkerboard effect
-    let isEvenRow = ((props.index / props.gridSize) % 2 | 0) === 0;
+    let isEvenRow = Math.floor((props.data.index / props.gridSize) % 2) === 0;
     if (props.data.status === squareStatus.cleared) {
         bgColor = clearedColor;
         hoverColor = clearedHoverColor;
 
-        if (props.gridSize % 2 === 1 && props.index % 2 === 1) {
+        if (props.gridSize % 2 === 1 && props.data.index % 2 === 1) {
             bgColor = clearedAltColor;
         } else if (
             props.gridSize % 2 === 0 &&
             isEvenRow &&
-            props.index % 2 === 1
+            props.data.index % 2 === 1
         ) {
             bgColor = clearedAltColor;
         } else if (
             props.gridSize % 2 === 0 &&
             !isEvenRow &&
-            props.index % 2 === 0
+            props.data.index % 2 === 0
         ) {
             bgColor = clearedAltColor;
         }
     } else {
-        if (props.gridSize % 2 === 1 && props.index % 2 === 1) {
+        if (props.gridSize % 2 === 1 && props.data.index % 2 === 1) {
             bgColor = defaultAltColor;
         } else if (
             props.gridSize % 2 === 0 &&
             isEvenRow &&
-            props.index % 2 === 1
+            props.data.index % 2 === 1
         ) {
             bgColor = defaultAltColor;
         } else if (
             props.gridSize % 2 === 0 &&
             !isEvenRow &&
-            props.index % 2 === 0
+            props.data.index % 2 === 0
         ) {
             bgColor = defaultAltColor;
         }
@@ -77,9 +75,16 @@ function Square(props: {
         >
             {props.data.status < 2 ? (
                 <div className="m-auto select-none">
-                    {squareImages[props.data.status]}
+                    {/* {squareImages[props.data.status]} */}
                 </div>
             ) : null}
+            <p
+                className={
+                    (props.data.isBomb ? "text-red-400" : "text-yellow-400") + " m-auto"
+                }
+            >
+                {props.data.nearCount}
+            </p>
         </div>
     );
 }
@@ -87,14 +92,23 @@ function Square(props: {
 export default function Minesweeper() {
     const [gridSize, setGridSize] = useState(10);
     const [grid, setGrid] = useState(
-        new Array<SquareData | null>(gridSize * gridSize).fill(null).map(() => {
-            return {
-                status: squareStatus.notClicked,
-                isBomb: false,
-            };
-        })
+        new Array<SquareData | null>(gridSize * gridSize)
+            .fill(null)
+            .map((_, key) => {
+                return {
+                    status: squareStatus.notClicked,
+                    isBomb: false,
+                    nearCount: 0,
+                    index: key,
+                };
+            })
     );
     const [shouldRefresh, setShouldRefresh] = useState(false);
+    const bombCount = useRef(0);
+
+    useEffect(() => {
+        document.title = "Minesweeper";
+    }, []);
 
     const buttonStyling =
         "transition-all my-1 rounded-md bg-gray-200 px-2 py-1 mx-3 font-sans text-xl shadow hover:bg-gray-400 active:bg-gray-800 active:text-white";
@@ -109,22 +123,79 @@ export default function Minesweeper() {
     }
 
     function makeNewGrid(newSize: number) {
+        bombCount.current = 0;
         setGrid(
             new Array<SquareData | null>(newSize * newSize)
                 .fill(null)
-                .map(() => {
+                .map((_, key) => {
                     return {
                         status: squareStatus.notClicked,
                         isBomb: false,
+                        nearCount: 0,
+                        index: key,
                     };
                 })
         );
     }
 
-    function addMines() {
-        // TODO: y0
+    function addMine(numberOfMines: number) {
+        if (numberOfMines < 0) {
+            return;
+        }
+        
+        for (let i = 0; i < numberOfMines; i++) {
+            addSingleMine();
+        }
     }
 
+    function addSingleMine() {
+        let num = Math.floor(Math.random() * (gridSize * gridSize));
+        while (grid[num].isBomb === true) {
+            if (bombCount.current === gridSize * gridSize) {
+                return;
+            }
+            num = Math.floor(Math.random() * (gridSize * gridSize));
+        }
+
+        // top row then bottom row
+        if (num > gridSize - 1) {
+            grid[num - gridSize].nearCount++;
+
+            if (num % gridSize > 0) {
+                grid[num - gridSize - 1].nearCount++;
+            }
+            if (num % gridSize < gridSize - 1) {
+                grid[num - gridSize + 1].nearCount++;
+            }
+        }
+        if (num < gridSize * (gridSize - 1)) {
+            grid[num + gridSize].nearCount++;
+
+            if (num % gridSize > 0) {
+                grid[num + gridSize - 1].nearCount++;
+            }
+            if (num % gridSize < gridSize - 1) {
+                grid[num + gridSize + 1].nearCount++;
+            }
+        }
+
+        // left then right
+        if (num % gridSize > 0) {
+            grid[num - 1].nearCount++;
+        }
+        if (num % gridSize < gridSize - 1) {
+            grid[num + 1].nearCount++;
+        }
+
+        grid[num].isBomb = true;
+        grid[num].status = squareStatus.mine;
+        bombCount.current++;
+
+        // TODO: remove when done
+        setShouldRefresh(!shouldRefresh);
+    }
+
+    // TODO: need to have this function cascade to all nearby squares with 0 nearby mines
     function handleSquareClick(index: number) {
         // if (grid[index].status === squareStatus.cleared) {
         //     return;
@@ -145,30 +216,48 @@ export default function Minesweeper() {
 
     return (
         <div className="flex h-screen text-center">
-            <div className="m-auto">
+            <div className="m-auto block">
                 <p className="select-none text-5xl font-medium">Minesweeper</p>
                 <br />
-                <div className={`m-auto mt-5 grid my-grid-cols-${gridSize}`}>
+
+                <div
+                    className={`m-auto mb-4 grid w-fit my-grid-cols-${gridSize}`}
+                >
                     {grid.map((square, key) => (
                         <div onClick={() => handleSquareClick(key)}>
                             <Square
                                 data={square}
                                 key={key}
                                 gridSize={gridSize}
-                                index={key}
                             />
                         </div>
                     ))}
                 </div>
+
                 <button
                     className={buttonStyling + " mt-3"}
                     onClick={() => makeNewGrid(gridSize)}
                 >
                     Reset Game
                 </button>
+                <button
+                    className={buttonStyling + " mt-3"}
+                    onClick={() => addSingleMine()}
+                >
+                    Add Single Mine
+                </button>
+                <button
+                    className={buttonStyling + " mt-3"}
+                    onClick={() => addMine((gridSize * gridSize) / 5)}
+                >
+                    Add All Mines
+                </button>
                 <p className="select-none text-2xl font-medium">
                     Set Grid Size:
                 </p>
+                <button className={buttonStyling} onClick={() => resizeGrid(5)}>
+                    5x5
+                </button>
                 <button
                     className={buttonStyling}
                     onClick={() => resizeGrid(10)}
@@ -187,6 +276,12 @@ export default function Minesweeper() {
                 >
                     20x20
                 </button>
+                <br />
+                <Link href={"/"}>
+                    <button className={buttonStyling + " mt-2"}>
+                        Back To Home
+                    </button>
+                </Link>
             </div>
         </div>
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function GameOverPopUp(props: { winner?: string; moves?: number }) {
     let winnerString: string;
@@ -41,6 +41,10 @@ export default function TicTacToe() {
     const [gameIsActive, setGameIsActive] = useState(true);
     const [isDraw, setIsDraw] = useState(false);
     const moveCount = useRef(0);
+
+    useEffect(() => {
+        document.title = "Tic Tac Toe";
+    }, []);
 
     const resetGrid = () => {
         setGrid(baseGrid);

@@ -22,9 +22,9 @@ export default function Home() {
                 <br />
                 <GameButton href="/Minesweeper" label="Minesweeper" />
                 <br />
-                <GameButton href="/" label="Snake Game" />
+                <GameButton href="#" label="Snake Game" />
                 <br />
-                <GameButton href="/" label="Type Racer" />
+                <GameButton href="#" label="Type Racer" />
             </div>
         </div>
     );
