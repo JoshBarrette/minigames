@@ -62,7 +62,7 @@ function Square(props: { data: SquareData; gridSize: number }) {
 
     return (
         <div
-            className={`flex h-8 w-8 ${bgColor} p-2 text-xs hover:transition-all ${hoverColor}`}
+            className={`flex h-8 w-8 ${bgColor} p-2 text-xs transition-all ${hoverColor}`}
         >
             {props.data.status === squareStatus.flagged ||
             props.data.status === squareStatus.mine ? (
@@ -77,9 +77,32 @@ function Square(props: { data: SquareData; gridSize: number }) {
                     {props.data.nearCount}
                 </p>
             ) : null}
+
+            {/* {props.data.isBomb === true ? (
+                <div className="m-auto select-none">
+                    {squareImages[squareStatus.mine]}
+                </div>
+            ) : null} */}
         </div>
     );
 }
+
+function GameOver(props: { didWin: boolean; minesRemaining?: number }) {
+    return (
+        <div>
+            <p>Game Over</p>
+            {props.didWin ? (
+                <p>ez W</p>
+            ) : (
+                <p>u sux. mines remaining: {props.minesRemaining}</p>
+            )}
+        </div>
+    );
+}
+
+// I really hate that this needs to be out here but for some reason updating
+// state too fast will cause a race condition
+let squaresRemaining = 0;
 
 export default function Minesweeper() {
     const [gridSize, setGridSize] = useState(10);
@@ -96,11 +119,14 @@ export default function Minesweeper() {
                 };
             })
     );
+    const [gameOver, setGameOver] = useState(false);
+    const [didWin, setDidWin] = useState(false);
     const [shouldRefresh, setShouldRefresh] = useState(false);
     const bombCount = useRef(0);
 
     useEffect(() => {
         document.title = "Minesweeper";
+        squaresRemaining = gridSize * gridSize;
     }, []);
 
     // Need this to stop a race condition :woozy:
@@ -136,6 +162,9 @@ export default function Minesweeper() {
                 })
         );
         setGridSize(newSize);
+        setGameOver(false);
+        setDidWin(false);
+        squaresRemaining = gridSize * gridSize;
     }
 
     function addMines(numberOfMines: number) {
@@ -144,13 +173,13 @@ export default function Minesweeper() {
         }
 
         for (let i = 0; i < numberOfMines; i++) {
-            console.log("adding a mine");
             addSingleMine();
         }
 
         setFlagCount(numberOfMines);
     }
 
+    // TODO: factor out the massive if-else that does something to all surround squares
     function addSingleMine() {
         if (bombCount.current === gridSize * gridSize) {
             return;
@@ -159,7 +188,6 @@ export default function Minesweeper() {
         let num = Math.floor(Math.random() * (gridSize * gridSize));
         while (grid[num].isBomb === true) {
             num = Math.floor(Math.random() * (gridSize * gridSize));
-            console.log("in the while loop here");
         }
 
         // top row then bottom row
@@ -196,24 +224,70 @@ export default function Minesweeper() {
         bombCount.current++;
     }
 
-    // TODO: need to have this function cascade to all nearby squares with 0 nearby mines
     function handleSquareClick(index: number) {
         if (
+            gameOver ||
             grid[index].status === squareStatus.cleared ||
             grid[index].status === squareStatus.flagged
         ) {
             return;
-        } else if (grid[index].isBomb === false) {
+        } else if (
+            !grid[index].isBomb &&
+            grid[index].nearCount === 0 &&
+            grid[index].status === squareStatus.notClicked
+        ) {
+            // click all surrounding squares
             grid[index].status = squareStatus.cleared;
+            squaresRemaining--;
+
+            // top row then bottom row
+            if (index > gridSize - 1) {
+                handleSquareClick(index - gridSize);
+
+                if (index % gridSize > 0) {
+                    handleSquareClick(index - gridSize - 1);
+                }
+                if (index % gridSize < gridSize - 1) {
+                    handleSquareClick(index - gridSize + 1);
+                }
+            }
+            if (index < gridSize * (gridSize - 1)) {
+                handleSquareClick(index + gridSize);
+
+                if (index % gridSize > 0) {
+                    handleSquareClick(index + gridSize - 1);
+                }
+                if (index % gridSize < gridSize - 1) {
+                    handleSquareClick(index + gridSize + 1);
+                }
+            }
+
+            // left then right
+            if (index % gridSize > 0) {
+                handleSquareClick(index - 1);
+            }
+            if (index % gridSize < gridSize - 1) {
+                handleSquareClick(index + 1);
+            }
+
             setShouldRefresh(!shouldRefresh);
-            return;
+        } else if (
+            grid[index].isBomb === false &&
+            grid[index].status === squareStatus.notClicked
+        ) {
+            grid[index].status = squareStatus.cleared;
+            squaresRemaining--;
+            setShouldRefresh(!shouldRefresh);
         } else if (grid[index].isBomb === true) {
             grid[index].status = squareStatus.mine;
-            setShouldRefresh(!shouldRefresh);
-            return;
+            setGameOver(true);
         }
+        console.log(squaresRemaining);
 
-        setShouldRefresh(!shouldRefresh);
+        if (squaresRemaining === (gridSize * gridSize) / 5 && !gameOver) {
+            setGameOver(true);
+            setDidWin(true);
+        }
     }
 
     function handleSquareRightClick(index: number, event: MouseEvent) {
@@ -228,6 +302,7 @@ export default function Minesweeper() {
         }
     }
 
+    // TODO: need a timer
     return (
         <div className="flex h-screen text-center">
             <div className="m-auto block">
@@ -248,7 +323,7 @@ export default function Minesweeper() {
                         >
                             <Square
                                 data={square}
-                                key={key}
+                                key={gridSize * 100 + key} // gotta change that key baby
                                 gridSize={gridSize}
                             />
                         </div>
@@ -256,25 +331,25 @@ export default function Minesweeper() {
                 </div>
 
                 <button
-                    className={buttonStyling + "mt-3"}
+                    className={buttonStyling}
                     onClick={() => {
                         makeNewGrid(gridSize);
                     }}
                 >
                     Reset Game
                 </button>
-                <button
-                    className={buttonStyling + "mt-3"}
+                {/* <button
+                    className={buttonStyling}
                     onClick={() => addMines((gridSize * gridSize) / 5)}
                 >
                     Add All Mines
                 </button>
                 <button
-                    className={buttonStyling + "mt-3"}
+                    className={buttonStyling}
                     onClick={() => addSingleMine()}
                 >
                     Add Single Mine
-                </button>
+                </button> */}
                 <p className="select-none text-2xl font-medium">
                     Set Grid Size:
                 </p>
@@ -308,6 +383,10 @@ export default function Minesweeper() {
                     </button>
                 </Link>
             </div>
+
+            {gameOver ? (
+                <GameOver didWin={didWin} minesRemaining={bombCount.current} />
+            ) : null}
         </div>
     );
 }

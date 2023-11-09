@@ -21,10 +21,10 @@ export default function Home() {
                 <GameButton href="/TicTacToe" label="Tic Tac Toe" />
                 <br />
                 <GameButton href="/Minesweeper" label="Minesweeper" />
-                <br />
+                {/* <br />
                 <GameButton href="#" label="Snake Game" />
                 <br />
-                <GameButton href="#" label="Type Racer" />
+                <GameButton href="#" label="Type Racer" /> */}
             </div>
         </div>
     );
