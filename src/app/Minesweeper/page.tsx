@@ -85,11 +85,9 @@ function GameOverPopUp(props: { didWin: boolean }) {
     const bgColor = props.didWin ? "bg-green-400" : "bg-red-400";
     return (
         <div
-            className={`pointer-events-none rounded-md bg-opacity-80 ${bgColor}`}
+            className={`pointer-events-none select-none rounded-md bg-opacity-80 px-8 py-4 text-3xl font-medium text-white ${bgColor}`}
         >
-            <p className="select-none px-8 py-4 text-3xl font-medium text-white">
-                {props.didWin ? <p>You Win!</p> : <p>You Lose!</p>}
-            </p>
+            {props.didWin ? <p>You Win!</p> : <p>You Lose!</p>}
         </div>
     );
 }
@@ -297,7 +295,6 @@ export default function Minesweeper() {
                         >
                             <Square
                                 data={square}
-                                key={gridSize * 100 + key} // gotta change that key baby
                                 gridSize={gridSize}
                             />
                         </div>

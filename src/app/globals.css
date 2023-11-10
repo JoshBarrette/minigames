@@ -16,27 +16,31 @@
     }
 }
 
+@layer base {
+    p {
+        @apply text-white;
+    }
+    
+    h1 {
+        @apply text-white;
+    }
+    
+    button {
+        @apply shadow;
+        @apply transition-all;
+        @apply rounded-md;
+        @apply bg-gray-200;
+        @apply hover:bg-gray-400;
+        @apply active:bg-gray-800;
+        @apply active:text-white;
+        @apply font-sans;
+    }
+}
+
 body {
     margin: 0px;
     padding: 0px;
     background: #121212;
-}
-
-p {
-    @apply text-white;
-}
-h1 {
-    @apply text-white;
-}
-button {
-    @apply shadow;
-    @apply transition-all;
-    @apply rounded-md;
-    @apply bg-gray-200;
-    @apply hover:bg-gray-400;
-    @apply active:bg-gray-800;
-    @apply active:text-white;
-    @apply font-sans;
 }
 
 .my-grid-cols-5 {
