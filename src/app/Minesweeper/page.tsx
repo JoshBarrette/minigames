@@ -293,6 +293,7 @@ export default function Minesweeper() {
                             onContextMenu={(e) =>
                                 handleSquareRightClick(key, e)
                             }
+                            key={gridSize * 100 + key}
                         >
                             <Square
                                 data={square}
