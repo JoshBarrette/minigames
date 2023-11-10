@@ -1,26 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-function GameOverPopUp(props: { winner?: string; moves?: number }) {
+function GameOverPopUp(props: { winner?: string; moves: number }) {
     let winnerString: string;
+    let moves = props.moves + 1; // for some reason this needs to be a +1
     if (props.winner === undefined) {
         winnerString = "Tie";
+        moves = 9;
     } else {
         winnerString = `Winner: ${props.winner}`;
     }
 
-    let moves: number;
-    if (props.moves === undefined) {
-        moves = 9;
-    } else {
-        moves = props.moves + 1;
-    }
-
     return (
-        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-md bg-slate-800 bg-opacity-80">
-            <p className="mb-5 select-none px-8 pt-4 text-3xl font-medium text-white">
+        <div className="pointer-events-none rounded-md bg-slate-800 bg-opacity-80">
+            <p className="mb-5 select-none px-8 py-4 text-3xl font-medium text-white">
                 {winnerString}
                 <br />
                 Total Moves: {moves}
@@ -40,14 +35,18 @@ export default function TicTacToe() {
     const [grid, setGrid] = useState(baseGrid);
     const [gameIsActive, setGameIsActive] = useState(true);
     const [isDraw, setIsDraw] = useState(false);
-    const moveCount = useRef(0);
+    const [moveCount, setMoveCount] = useState(0);
+
+    useEffect(() => {
+        document.title = "Tic Tac Toe";
+    }, []);
 
     const resetGrid = () => {
         setGrid(baseGrid);
         setPlayer("X");
         setGameIsActive(true);
         setIsDraw(false);
-        moveCount.current = 0;
+        setMoveCount(0);
     };
 
     const handleTileClick = (row: number, col: number) => {
@@ -103,8 +102,12 @@ export default function TicTacToe() {
             setPlayer("O");
         }
 
-        if (++moveCount.current === 9) {
+        if (moveCount + 1 === 9) {
+            setMoveCount(9);
             setIsDraw(true);
+            setGameIsActive(false);
+        } else {
+            setMoveCount(moveCount + 1);
         }
     };
 
@@ -124,33 +127,35 @@ export default function TicTacToe() {
                         return arr.map((currentChar, col) => (
                             <div
                                 onClick={() => handleTileClick(row, col)}
-                                className="h-24 w-20 select-none rounded-sm text-8xl hover:bg-gray-200"
+                                className="h-24 w-20 select-none rounded-sm text-8xl transition-all hover:bg-gray-800"
                                 key={keyCounter++}
                             >
-                                {currentChar}
+                                <p>{currentChar}</p>
                             </div>
                         ));
                     })}
                 </div>
 
-                <button
-                    className="rounded-md bg-gray-200 px-4 py-2 font-sans text-3xl shadow hover:bg-gray-400 active:bg-gray-800 active:text-white"
-                    onClick={resetGrid}
-                >
+                <button className="px-4 py-2 text-3xl" onClick={resetGrid}>
                     Reset Game
                 </button>
                 <br />
                 <Link href="/">
-                    <button className="mt-2 rounded-md bg-gray-200 px-4 py-2 font-sans text-3xl shadow hover:bg-gray-400 active:bg-gray-800 active:text-white">
+                    <button className="mt-2 px-4 py-2 text-3xl">
                         Back To Home
                     </button>
                 </Link>
 
-                {!gameIsActive ? (
-                    <GameOverPopUp winner={player} moves={moveCount.current} />
-                ) : null}
-
-                {isDraw ? <GameOverPopUp /> : null}
+                <div
+                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform transition-all ${
+                        gameIsActive ? "scale-0" : "scale-100"
+                    }`}
+                >
+                    <GameOverPopUp
+                        winner={isDraw ? undefined : player}
+                        moves={moveCount}
+                    />
+                </div>
             </div>
         </div>
     );

@@ -19,4 +19,42 @@
 body {
     margin: 0px;
     padding: 0px;
+    background: #121212;
+}
+
+p {
+    @apply text-white;
+}
+h1 {
+    @apply text-white;
+}
+button {
+    @apply shadow;
+    @apply transition-all;
+    @apply rounded-md;
+    @apply bg-gray-200;
+    @apply hover:bg-gray-400;
+    @apply active:bg-gray-800;
+    @apply active:text-white;
+    @apply font-sans;
+}
+
+.my-grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.my-grid-cols-10 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+.my-grid-cols-15 {
+    grid-template-columns: repeat(15, minmax(0, 1fr));
+}
+
+.my-grid-cols-20 {
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+}
+
+.my-grid-cols-25 {
+    grid-template-columns: repeat(25, minmax(0, 1fr));
 }
