@@ -148,7 +148,7 @@ export default function Minesweeper() {
         setGridSize(newSize);
         setGameOver(false);
         setDidWin(false);
-        squaresRemaining = gridSize * gridSize;
+        squaresRemaining = newSize * newSize;
     }
 
     function addMines(numberOfMines: number) {
