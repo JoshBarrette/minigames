@@ -77,25 +77,19 @@ function Square(props: { data: SquareData; gridSize: number }) {
                     {props.data.nearCount}
                 </p>
             ) : null}
-
-            {/* {props.data.isBomb === true ? (
-                <div className="m-auto select-none">
-                    {squareImages[squareStatus.mine]}
-                </div>
-            ) : null} */}
         </div>
     );
 }
 
-function GameOver(props: { didWin: boolean; minesRemaining?: number }) {
+function GameOverPopUp(props: { didWin: boolean }) {
+    const bgColor = props.didWin ? "bg-green-400" : "bg-red-400";
     return (
-        <div>
-            <p>Game Over</p>
-            {props.didWin ? (
-                <p>ez W</p>
-            ) : (
-                <p>u sux. mines remaining: {props.minesRemaining}</p>
-            )}
+        <div
+            className={`pointer-events-none rounded-md bg-opacity-80 ${bgColor}`}
+        >
+            <p className="select-none px-8 py-4 text-3xl font-medium text-white">
+                {props.didWin ? <p>You Win!</p> : <p>You Lose!</p>}
+            </p>
         </div>
     );
 }
@@ -107,18 +101,7 @@ let squaresRemaining = 0;
 export default function Minesweeper() {
     const [gridSize, setGridSize] = useState(10);
     const [flagCount, setFlagCount] = useState((gridSize * gridSize) / 5);
-    const [grid, setGrid] = useState(
-        new Array<SquareData | null>(gridSize * gridSize)
-            .fill(null)
-            .map((_, key) => {
-                return {
-                    status: squareStatus.notClicked,
-                    isBomb: false,
-                    nearCount: 0,
-                    index: key,
-                };
-            })
-    );
+    const [grid, setGrid] = useState<Array<SquareData>>(makeNewArray(gridSize));
     const [gameOver, setGameOver] = useState(false);
     const [didWin, setDidWin] = useState(false);
     const [shouldRefresh, setShouldRefresh] = useState(false);
@@ -134,8 +117,22 @@ export default function Minesweeper() {
         addMines((gridSize * gridSize) / 5);
     }, [grid]);
 
-    const buttonStyling =
-        "transition-all my-1 rounded-md bg-gray-200 px-2 py-1 mx-3 font-sans text-xl shadow hover:bg-gray-400 active:bg-gray-800 active:text-white ";
+    const buttonStyling = "mx-3 my-1 px-2 py-1 text-xl ";
+
+    function makeNewArray(newSize: number): Array<SquareData> {
+        let newArr = new Array<SquareData | null>(newSize * newSize)
+            .fill(null)
+            .map((_, key) => {
+                return {
+                    status: squareStatus.notClicked,
+                    isBomb: false,
+                    nearCount: 0,
+                    index: key,
+                };
+            });
+
+        return newArr;
+    }
 
     function resizeGrid(newSize: number) {
         if (newSize === gridSize) {
@@ -149,18 +146,7 @@ export default function Minesweeper() {
     function makeNewGrid(newSize: number) {
         bombCount.current = 0;
         setFlagCount((newSize * newSize) / 5);
-        setGrid(
-            new Array<SquareData | null>(newSize * newSize)
-                .fill(null)
-                .map((_, key) => {
-                    return {
-                        status: squareStatus.notClicked,
-                        isBomb: false,
-                        nearCount: 0,
-                        index: key,
-                    };
-                })
-        );
+        setGrid(makeNewArray(newSize));
         setGridSize(newSize);
         setGameOver(false);
         setDidWin(false);
@@ -179,7 +165,41 @@ export default function Minesweeper() {
         setFlagCount(numberOfMines);
     }
 
-    // TODO: factor out the massive if-else that does something to all surround squares
+    function applyToBorderSquares(
+        index: number,
+        callback: (num: number) => void
+    ) {
+        // top row then bottom row
+        if (index > gridSize - 1) {
+            callback(index - gridSize);
+
+            if (index % gridSize > 0) {
+                callback(index - gridSize - 1);
+            }
+            if (index % gridSize < gridSize - 1) {
+                callback(index - gridSize + 1);
+            }
+        }
+        if (index < gridSize * (gridSize - 1)) {
+            callback(index + gridSize);
+
+            if (index % gridSize > 0) {
+                callback(index + gridSize - 1);
+            }
+            if (index % gridSize < gridSize - 1) {
+                callback(index + gridSize + 1);
+            }
+        }
+
+        // left then right
+        if (index % gridSize > 0) {
+            callback(index - 1);
+        }
+        if (index % gridSize < gridSize - 1) {
+            callback(index + 1);
+        }
+    }
+
     function addSingleMine() {
         if (bombCount.current === gridSize * gridSize) {
             return;
@@ -190,38 +210,18 @@ export default function Minesweeper() {
             num = Math.floor(Math.random() * (gridSize * gridSize));
         }
 
-        // top row then bottom row
-        if (num > gridSize - 1) {
-            grid[num - gridSize].nearCount++;
-
-            if (num % gridSize > 0) {
-                grid[num - gridSize - 1].nearCount++;
-            }
-            if (num % gridSize < gridSize - 1) {
-                grid[num - gridSize + 1].nearCount++;
-            }
-        }
-        if (num < gridSize * (gridSize - 1)) {
-            grid[num + gridSize].nearCount++;
-
-            if (num % gridSize > 0) {
-                grid[num + gridSize - 1].nearCount++;
-            }
-            if (num % gridSize < gridSize - 1) {
-                grid[num + gridSize + 1].nearCount++;
-            }
-        }
-
-        // left then right
-        if (num % gridSize > 0) {
-            grid[num - 1].nearCount++;
-        }
-        if (num % gridSize < gridSize - 1) {
-            grid[num + 1].nearCount++;
-        }
+        applyToBorderSquares(num, (i) => grid[i].nearCount++);
 
         grid[num].isBomb = true;
         bombCount.current++;
+    }
+
+    function revealAllBombs() {
+        grid.map((square) => {
+            if (square.isBomb) {
+                square.status = squareStatus.mine;
+            }
+        });
     }
 
     function handleSquareClick(index: number) {
@@ -240,35 +240,7 @@ export default function Minesweeper() {
             grid[index].status = squareStatus.cleared;
             squaresRemaining--;
 
-            // top row then bottom row
-            if (index > gridSize - 1) {
-                handleSquareClick(index - gridSize);
-
-                if (index % gridSize > 0) {
-                    handleSquareClick(index - gridSize - 1);
-                }
-                if (index % gridSize < gridSize - 1) {
-                    handleSquareClick(index - gridSize + 1);
-                }
-            }
-            if (index < gridSize * (gridSize - 1)) {
-                handleSquareClick(index + gridSize);
-
-                if (index % gridSize > 0) {
-                    handleSquareClick(index + gridSize - 1);
-                }
-                if (index % gridSize < gridSize - 1) {
-                    handleSquareClick(index + gridSize + 1);
-                }
-            }
-
-            // left then right
-            if (index % gridSize > 0) {
-                handleSquareClick(index - 1);
-            }
-            if (index % gridSize < gridSize - 1) {
-                handleSquareClick(index + 1);
-            }
+            applyToBorderSquares(index, (i) => handleSquareClick(i));
 
             setShouldRefresh(!shouldRefresh);
         } else if (
@@ -280,9 +252,9 @@ export default function Minesweeper() {
             setShouldRefresh(!shouldRefresh);
         } else if (grid[index].isBomb === true) {
             grid[index].status = squareStatus.mine;
+            revealAllBombs();
             setGameOver(true);
         }
-        console.log(squaresRemaining);
 
         if (squaresRemaining === (gridSize * gridSize) / 5 && !gameOver) {
             setGameOver(true);
@@ -293,7 +265,9 @@ export default function Minesweeper() {
     function handleSquareRightClick(index: number, event: MouseEvent) {
         event.preventDefault();
 
-        if (grid[index].status === squareStatus.notClicked) {
+        if (gameOver) {
+            return;
+        } else if (grid[index].status === squareStatus.notClicked) {
             grid[index].status = squareStatus.flagged;
             setFlagCount(flagCount - 1);
         } else if (grid[index].status === squareStatus.flagged) {
@@ -302,13 +276,12 @@ export default function Minesweeper() {
         }
     }
 
-    // TODO: need a timer
     return (
         <div className="flex h-screen text-center">
             <div className="m-auto block">
                 <p className="select-none text-5xl font-medium">Minesweeper</p>
 
-                <p className="mb-1">
+                <p className="mb-1 select-none">
                     {squareImages[squareStatus.flagged]}: {flagCount}
                 </p>
                 <div
@@ -338,18 +311,6 @@ export default function Minesweeper() {
                 >
                     Reset Game
                 </button>
-                {/* <button
-                    className={buttonStyling}
-                    onClick={() => addMines((gridSize * gridSize) / 5)}
-                >
-                    Add All Mines
-                </button>
-                <button
-                    className={buttonStyling}
-                    onClick={() => addSingleMine()}
-                >
-                    Add Single Mine
-                </button> */}
                 <p className="select-none text-2xl font-medium">
                     Set Grid Size:
                 </p>
@@ -384,9 +345,13 @@ export default function Minesweeper() {
                 </Link>
             </div>
 
-            {gameOver ? (
-                <GameOver didWin={didWin} minesRemaining={bombCount.current} />
-            ) : null}
+            <div
+                className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform transition-all ${
+                    gameOver ? "scale-100" : "scale-0"
+                }`}
+            >
+                <GameOverPopUp didWin={didWin} />
+            </div>
         </div>
     );
 }

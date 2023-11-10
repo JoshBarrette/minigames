@@ -3,7 +3,7 @@ import Link from "next/link";
 function GameButton(props: { href: string; label: string }) {
     return (
         <Link href={props.href}>
-            <button className="my-1 rounded-md bg-gray-200 px-4 py-2 font-sans text-3xl shadow transition-all hover:bg-gray-400 active:bg-gray-800 active:text-white">
+            <button className="my-1 rounded-md px-4 py-2 text-3xl">
                 {props.label}
             </button>
         </Link>
