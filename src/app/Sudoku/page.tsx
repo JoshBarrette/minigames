@@ -1,8 +1,9 @@
 "use client";
 
-import assert from "assert";
 import Link from "next/link";
-import { ChangeEvent, RefObject, createRef, useRef, useState } from "react";
+import { ChangeEvent, RefObject, createRef, useState } from "react";
+
+// TODO: rewrite this to work with strings instead of numbers
 
 function RenderSudokuGrid(props: {
     grid: Array<number>;
@@ -15,6 +16,7 @@ function RenderSudokuGrid(props: {
         index: number,
         subIndex: number
     ) {
+        // console.log(event.target.valueAsNumber);
         if (
             isNaN(event.target.valueAsNumber) ||
             event.target.valueAsNumber < 0
@@ -22,14 +24,19 @@ function RenderSudokuGrid(props: {
             props.grid[index + subIndex] = 0;
             props.callback(!props.status);
             return;
-        } else if (event.target.valueAsNumber < 99 && event.target.valueAsNumber >= 0) {
+        } else if (event.target.valueAsNumber > Math.pow(10, 16)) {
+            return;
+        }
+        else if (
+            event.target.valueAsNumber < 99 &&
+            event.target.valueAsNumber > 0
+        ) {
             props.grid[index + subIndex] = event.target.valueAsNumber % 10;
-            console.log(index + subIndex);
             if (index + subIndex + 1 < 81) {
                 props.refsGrid[index + subIndex + 1].current.focus();
             }
             props.callback(!props.status);
-            return
+            return;
         }
 
         // Need to reverse the number so that they go in in the right order
@@ -83,7 +90,7 @@ function RenderSudokuGrid(props: {
                                         : ""
                                 }
                                 className={squareStyles}
-                                type="number"
+                                type="text"
                                 ref={props.refsGrid[index + subIndex]}
                                 key={index + subIndex}
                             />
@@ -96,14 +103,18 @@ function RenderSudokuGrid(props: {
 }
 
 export default function Sudoku() {
-    const [grid, setGrid] = useState(makeNewGrid());
+    const [grid, setGrid] = useState(makeNewBlankGrid());
     const [shouldRefresh, setShouldRefresh] = useState(false);
     const [refsGrid, setRefsGrid] = useState(makeNewRefsGrid());
 
-    function makeNewGrid(): Array<number> {
+    function makeNewIndexGrid(): Array<number> {
         return new Array<number | null>(81)
             .fill(null)
             .map((val, index) => index);
+    }
+
+    function makeNewBlankGrid(): Array<number> {
+        return new Array<number>(81).fill(0);
     }
 
     function makeNewRefsGrid(): Array<RefObject<any>> {
