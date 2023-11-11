@@ -1,17 +1,58 @@
 "use client";
 
+import assert from "assert";
 import Link from "next/link";
-import { RefObject, createRef, useRef, useState } from "react";
+import { ChangeEvent, RefObject, createRef, useRef, useState } from "react";
 
 function RenderSudokuGrid(props: {
     grid: Array<number>;
     callback: (b: boolean) => void;
-    status?: boolean;
+    status: boolean;
     refsGrid: Array<RefObject<any>>;
 }) {
+    function handleInput(
+        event: ChangeEvent<HTMLInputElement>,
+        index: number,
+        subIndex: number
+    ) {
+        if (
+            isNaN(event.target.valueAsNumber) ||
+            event.target.valueAsNumber < 0
+        ) {
+            props.grid[index + subIndex] = 0;
+            props.callback(!props.status);
+            return;
+        } else if (event.target.valueAsNumber < 99 && event.target.valueAsNumber >= 0) {
+            props.grid[index + subIndex] = event.target.valueAsNumber % 10;
+            console.log(index + subIndex);
+            if (index + subIndex + 1 < 81) {
+                props.refsGrid[index + subIndex + 1].current.focus();
+            }
+            props.callback(!props.status);
+            return
+        }
+
+        // Need to reverse the number so that they go in in the right order
+        let num = +event.target.valueAsNumber
+            .toString()
+            .split("")
+            .reverse()
+            .join("");
+        let i = index + subIndex;
+        while (num > 0 && i < 81) {
+            props.grid[i] = num % 10;
+            props.refsGrid[i].current.focus();
+            i++;
+            num = Math.floor(num / 10);
+        }
+
+        props.callback(!props.status);
+    }
+
+    // All of the sub-iteration is because of padding issues in grids
     return (
         <div className="grid grid-cols-3 gap-2">
-            {props.grid.map((_, index, arr) => {
+            {props.grid.map((_, index) => {
                 if (index % 3 !== 0) {
                     return null;
                 }
@@ -27,47 +68,26 @@ function RenderSudokuGrid(props: {
                         className={`grid grid-cols-3 gap-2 text-center ${paddingTop} ${paddingRight}`}
                         key={index}
                     >
-                        {[arr[index], arr[index + 1], arr[index + 2]].map(
-                            (val, subIndex) => (
-                                <input
-                                    onChange={(event) => {
-                                        if (
-                                            (event.target.value === "" &&
-                                                isNaN(
-                                                    event.target.valueAsNumber
-                                                )) ||
-                                            event.target.valueAsNumber < 0
-                                        ) {
-                                            arr[index + subIndex] = 0;
-                                        }
-
-                                        let num = +event.target.valueAsNumber
-                                            .toString()
-                                            .split("")
-                                            .reverse()
-                                            .join("");
-                                        let i = index + subIndex;
-                                        while (num > 0) {
-                                            arr[i] = num % 10;
-                                            props.refsGrid[i].current.focus();
-                                            i++;
-                                            num = Math.floor(num / 10);
-                                        }
-
-                                        props.callback(!props.status);
-                                    }}
-                                    value={
-                                        val !== 0 || isNaN(val)
-                                            ? arr[index + subIndex]
-                                            : ""
-                                    }
-                                    className={squareStyles}
-                                    type="number"
-                                    ref={props.refsGrid[index + subIndex]}
-                                    key={index + subIndex}
-                                />
-                            )
-                        )}
+                        {[
+                            props.grid[index],
+                            props.grid[index + 1],
+                            props.grid[index + 2],
+                        ].map((val, subIndex) => (
+                            <input
+                                onChange={(e) =>
+                                    handleInput(e, index, subIndex)
+                                }
+                                value={
+                                    val !== 0 || isNaN(val)
+                                        ? props.grid[index + subIndex]
+                                        : ""
+                                }
+                                className={squareStyles}
+                                type="number"
+                                ref={props.refsGrid[index + subIndex]}
+                                key={index + subIndex}
+                            />
+                        ))}
                     </div>
                 );
             })}
