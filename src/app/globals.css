@@ -20,11 +20,11 @@
     p {
         @apply text-white;
     }
-    
+
     h1 {
         @apply text-white;
     }
-    
+
     button {
         @apply shadow;
         @apply transition-all;
@@ -34,6 +34,14 @@
         @apply active:bg-gray-800;
         @apply active:text-white;
         @apply font-sans;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"] {
+        -webkit-appearance: none;
+        margin: 0;
+        -moz-appearance: textfield !important;
     }
 }
 
