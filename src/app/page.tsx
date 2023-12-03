@@ -22,7 +22,7 @@ export default function Home() {
                 <br />
                 <GameButton href="/Minesweeper" label="Minesweeper" />
                 <br />
-                <GameButton href="/Sudoku" label="Sudoku Solver" />
+                <GameButton href="/Sudoku" label="Sudoku Verifier" />
                 {/* <br />
                 <GameButton href="#" label="Snake Game" />
                 <br />
