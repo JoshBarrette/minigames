@@ -21,6 +21,8 @@ export default function Home() {
                 <GameButton href="/TicTacToe" label="Tic Tac Toe" />
                 <br />
                 <GameButton href="/Minesweeper" label="Minesweeper" />
+                <br />
+                <GameButton href="/Sudoku" label="Sudoku Verifier" />
                 {/* <br />
                 <GameButton href="#" label="Snake Game" />
                 <br />

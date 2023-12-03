@@ -3,11 +3,12 @@
 Just some React practice
 
 ## Games to make:
-- Snake game
-- Type racer
-- Set
-- Minesweeper
 
-## TODO:
-- Add windows for how to play.
-- Put all the common styles into their own file.
+-   Sudoku solver (verifier complete)
+-   Snake game
+-   Type racer
+-   Set
+
+## Known Issues:
+
+-   Sudoku uses number inputs and is this limited to the size of JS integers for pasting values.
