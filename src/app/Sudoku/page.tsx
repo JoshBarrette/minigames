@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { ChangeEvent, RefObject, createRef, useState } from "react";
 
-// TODO: rewrite this to work with strings instead of numbers
-
 function RenderSudokuGrid(props: {
     grid: Array<number>;
     callback: (b: boolean) => void;
@@ -16,7 +14,6 @@ function RenderSudokuGrid(props: {
         index: number,
         subIndex: number
     ) {
-        // console.log(event.target.valueAsNumber);
         if (
             isNaN(event.target.valueAsNumber) ||
             event.target.valueAsNumber < 0
@@ -26,8 +23,7 @@ function RenderSudokuGrid(props: {
             return;
         } else if (event.target.valueAsNumber > Math.pow(10, 16)) {
             return;
-        }
-        else if (
+        } else if (
             event.target.valueAsNumber < 99 &&
             event.target.valueAsNumber > 0
         ) {
@@ -90,7 +86,7 @@ function RenderSudokuGrid(props: {
                                         : ""
                                 }
                                 className={squareStyles}
-                                type="text"
+                                type="number"
                                 ref={props.refsGrid[index + subIndex]}
                                 key={index + subIndex}
                             />
@@ -108,35 +104,63 @@ export default function Sudoku() {
     const [refsGrid, setRefsGrid] = useState(makeNewRefsGrid());
 
     function makeNewIndexGrid(): Array<number> {
-        return new Array<number | null>(81)
-            .fill(null)
-            .map((val, index) => index);
+        return new Array<number | null>(81).fill(null).map((_, index) => index);
     }
 
     function makeNewBlankGrid(): Array<number> {
         return new Array<number>(81).fill(0);
     }
 
-    function makeNewRefsGrid(): Array<RefObject<any>> {
-        return new Array<RefObject<any> | null>(81)
+    function makeNewRefsGrid(): Array<RefObject<HTMLInputElement>> {
+        return new Array<RefObject<HTMLInputElement> | null>(81)
             .fill(null)
             .map(() => createRef());
     }
 
     // TODO: y0
-    function handleSolve() {
-        return;
-    }
+    // function handleSolve() {
+    //     return;
+    // }
 
     function handleCheckValid() {
-        return;
+        for (let i = 0; i < 81; i++) {
+            if (verifySingleSquare(i)) {
+                alert(`Invalid solution. Error on square ${i + 1}`);
+                return;
+            }
+        }
+
+        alert("Sudoku is valid!");
+    }
+
+    function verifySingleSquare(i: number): boolean {
+        const squareValue = refsGrid.at(i)?.current?.valueAsNumber ?? 0;
+        if (squareValue === 0) return true;
+
+        const rowStart = Math.floor(i / 9) * 9;
+        for (let rowIndex = rowStart; rowIndex < rowStart + 9; rowIndex++) {
+            Math.floor(i / 9) * 9;
+            if (grid[rowIndex] === squareValue && rowIndex !== i) {
+                refsGrid.at(i)?.current?.select();
+                return true;
+            }
+        }
+
+        for (let colIndex = i % 9; colIndex < 81; colIndex += 9) {
+            if (grid[colIndex] === squareValue && colIndex !== i) {
+                refsGrid.at(i)?.current?.select();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     return (
         <div className="flex h-screen text-center">
             <div className="m-auto">
                 <p className="mb-4 select-none text-5xl font-medium">
-                    Sudoku Solver
+                    Sudoku Verifier
                 </p>
 
                 <RenderSudokuGrid
@@ -147,20 +171,27 @@ export default function Sudoku() {
                 />
 
                 <div>
-                    <button
+                    {/* <button
                         className="mx-4 my-4 px-2 py-1 text-2xl"
                         onClick={handleSolve}
                     >
                         Solve
-                    </button>
+                    </button> */}
                     <button
                         className="mx-4 my-4 px-2 py-1 text-2xl"
                         onClick={handleCheckValid}
                     >
                         Check Solution
                     </button>
+                    <button
+                        className="mx-4 my-4 px-2 py-1 text-2xl"
+                        onClick={() => setGrid(makeNewBlankGrid())}
+                    >
+                        Clear Grid
+                    </button>
+                    <br />
                     <Link href={"/"}>
-                        <button className={"mx-4 my-4 mt-2 px-2 py-1 text-2xl"}>
+                        <button className="mx-4 my-4 mt-0 px-2 py-1 text-2xl">
                             Back To Home
                         </button>
                     </Link>
