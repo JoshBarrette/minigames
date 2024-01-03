@@ -5,8 +5,7 @@ import { ChangeEvent, RefObject, createRef, useState } from "react";
 
 function RenderSudokuGrid(props: {
     grid: Array<number>;
-    callback: (b: boolean) => void;
-    status: boolean;
+    refresh: () => void;
     refsGrid: Array<RefObject<any>>;
 }) {
     function handleInput(
@@ -14,42 +13,15 @@ function RenderSudokuGrid(props: {
         index: number,
         subIndex: number
     ) {
-        if (
-            isNaN(event.target.valueAsNumber) ||
-            event.target.valueAsNumber < 0
-        ) {
+        if (event.target.value == "" && index + subIndex - 1 >= 0) {
+            props.refsGrid[index + subIndex - 1].current.focus();
             props.grid[index + subIndex] = 0;
-            props.callback(!props.status);
-            return;
-        } else if (event.target.valueAsNumber > Math.pow(10, 16)) {
-            return;
-        } else if (
-            event.target.valueAsNumber < 99 &&
-            event.target.valueAsNumber > 0
-        ) {
-            props.grid[index + subIndex] = event.target.valueAsNumber % 10;
-            if (index + subIndex + 1 < 81) {
-                props.refsGrid[index + subIndex + 1].current.focus();
-            }
-            props.callback(!props.status);
-            return;
+        } else if (index + subIndex + 1 < 81) {
+            props.refsGrid[index + subIndex + 1].current.focus();
+            props.grid[index + subIndex] = event.target.valueAsNumber;
         }
 
-        // Need to reverse the number so that they go in in the right order
-        let num = +event.target.valueAsNumber
-            .toString()
-            .split("")
-            .reverse()
-            .join("");
-        let i = index + subIndex;
-        while (num > 0 && i < 81) {
-            props.grid[i] = num % 10;
-            props.refsGrid[i].current.focus();
-            i++;
-            num = Math.floor(num / 10);
-        }
-
-        props.callback(!props.status);
+        props.refresh();
     }
 
     // All of the sub-iteration is because of padding issues in grids
@@ -64,8 +36,6 @@ function RenderSudokuGrid(props: {
                 let colNum = index % 9;
                 let paddingTop = rowNum % 3 === 0 && rowNum !== 0 ? "mt-4" : "";
                 let paddingRight = colNum % 3 !== 2 ? "mr-4" : "";
-                let squareStyles =
-                    "w-10 bg-blue-300 leading-10 text-black text-2xl text-center";
                 return (
                     <div
                         className={`grid grid-cols-3 gap-2 text-center ${paddingTop} ${paddingRight}`}
@@ -85,7 +55,7 @@ function RenderSudokuGrid(props: {
                                         ? props.grid[index + subIndex]
                                         : ""
                                 }
-                                className={squareStyles}
+                                className="w-10 bg-blue-300 text-center text-2xl leading-10 text-black"
                                 type="number"
                                 ref={props.refsGrid[index + subIndex]}
                                 key={index + subIndex}
@@ -94,6 +64,63 @@ function RenderSudokuGrid(props: {
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+function NewGridFromString(props: {
+    grid: Array<number>;
+    refresh: () => void;
+}) {
+    const [showInput, setShowInput] = useState(false);
+
+    function handleInput(event: ChangeEvent<HTMLInputElement>) {
+        if (
+            event.target.value.length !== 81 ||
+            isNaN(event.target.valueAsNumber) ||
+            event.target.value === undefined
+        ) {
+            event.target.value = "";
+        }
+
+        const s = event.target.value;
+        for (let i = 0; i < 81; i++) {
+            props.grid[i] = parseInt(s.at(i) as string);
+        }
+
+        setShowInput(!showInput);
+        props.refresh();
+    }
+
+    return (
+        <div className="mx-4 text-2xl">
+            {showInput ? (
+                <div>
+                    <input
+                        type="number"
+                        className="w-72 bg-blue-300 text-center text-2xl leading-10 text-black placeholder:text-neutral-800"
+                        placeholder="Paste 81 digit string here"
+                        onChange={handleInput}
+                    />
+                    <button
+                        className="ml-4 px-2 py-1"
+                        onClick={() => setShowInput(!showInput)}
+                    >
+                        Cancel
+                    </button>
+                    <p className="text-lg">
+                        Example:
+                        010020300004005060070000008006900070000100002030048000500006040000800106008000000
+                    </p>
+                </div>
+            ) : (
+                <button
+                    className="px-2 py-1"
+                    onClick={() => setShowInput(!showInput)}
+                >
+                    Set Grid From String
+                </button>
+            )}
         </div>
     );
 }
@@ -135,7 +162,7 @@ export default function Sudoku() {
 
     function verifySingleSquare(i: number): boolean {
         const squareValue = refsGrid.at(i)?.current?.valueAsNumber ?? 0;
-        if (squareValue === 0) return true;
+        if (squareValue === 0 || isNaN(squareValue)) return true;
 
         const rowStart = Math.floor(i / 9) * 9;
         for (let rowIndex = rowStart; rowIndex < rowStart + 9; rowIndex++) {
@@ -157,45 +184,50 @@ export default function Sudoku() {
     }
 
     return (
-        <div className="flex h-screen text-center">
-            <div className="m-auto">
-                <p className="mb-4 select-none text-5xl font-medium">
-                    Sudoku Verifier
-                </p>
+        <div className="text-center">
+            <p className="my-4 select-none text-5xl font-medium">
+                Sudoku Verifier
+            </p>
+            <div className="flex">
+                <div className="mx-auto">
+                    <RenderSudokuGrid
+                        grid={grid}
+                        refresh={() => setShouldRefresh(!shouldRefresh)}
+                        refsGrid={refsGrid}
+                    />
+                </div>
+            </div>
 
-                <RenderSudokuGrid
-                    grid={grid}
-                    callback={setShouldRefresh}
-                    status={shouldRefresh}
-                    refsGrid={refsGrid}
-                />
-
-                <div>
-                    {/* <button
+            <div>
+                {/* <button
                         className="mx-4 my-4 px-2 py-1 text-2xl"
                         onClick={handleSolve}
                     >
                         Solve
                     </button> */}
-                    <button
-                        className="mx-4 my-4 px-2 py-1 text-2xl"
-                        onClick={handleCheckValid}
-                    >
-                        Check Solution
+                <button
+                    className="mx-4 my-4 px-2 py-1 text-2xl"
+                    onClick={handleCheckValid}
+                >
+                    Check Solution
+                </button>
+                <button
+                    className="mx-4 my-4 px-2 py-1 text-2xl"
+                    onClick={() => setGrid(makeNewBlankGrid())}
+                >
+                    Clear Grid
+                </button>
+                <br />
+                <NewGridFromString
+                    grid={grid}
+                    refresh={() => setShouldRefresh(!shouldRefresh)}
+                />
+                <br />
+                <Link href={"/"}>
+                    <button className="mx-4 my-4 -mt-2 px-2 py-1 text-2xl">
+                        Back To Home
                     </button>
-                    <button
-                        className="mx-4 my-4 px-2 py-1 text-2xl"
-                        onClick={() => setGrid(makeNewBlankGrid())}
-                    >
-                        Clear Grid
-                    </button>
-                    <br />
-                    <Link href={"/"}>
-                        <button className="mx-4 my-4 mt-0 px-2 py-1 text-2xl">
-                            Back To Home
-                        </button>
-                    </Link>
-                </div>
+                </Link>
             </div>
         </div>
     );
